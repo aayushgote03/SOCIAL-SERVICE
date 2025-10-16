@@ -1,8 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { signIn } from "next-auth/react";
-import { Mail, LockKeyhole, Loader2, LogIn, User, Facebook, Twitter, Chrome, Link } from 'lucide-react';
-import { set } from 'mongoose';
+import { LockKeyhole, Loader2, LogIn, User, Facebook, Twitter, Chrome, Link } from 'lucide-react';
 
 // 1. Define the Message interface for displaying status feedback
 interface Message {
@@ -57,67 +56,79 @@ const App: React.FC = () => {
   const [message, setMessage] = useState<Message | null>(null); // Use the defined Message interface
 
   // Simulated login attempt (explicitly type the form event)
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setLoading(true);
+  // Login attempt (UPDATED AND CORRECTED)
+const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    setLoading(true);
 
-    if(localStorage.getItem('user')){
-      setMessage({ type: 'error', text: 'Already logged in. Please logout first.' });
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('Already logged in. Please logout first.', user);
+    // --- CHECK ALREADY LOGGED IN ---
+    if(localStorage.getItem('user')){
+        console.log("User already logged in, aborting new login attempt.", localStorage.getItem('user'));
+        setMessage({ type: 'error', text: 'Already logged in. Please logout first.' });
+        setLoading(false);
+        window.location.href = '/mainapp/home'; // Redirect to dashboard/home page
+        return;
+    }
+
+    // Simulate an API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+
+    if (password.length < 6) {
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters long.' });
       setLoading(false);
-      return;
-    }
+      return;
+    } 
+    
+    try {
+        // 1. Attempt NextAuth Sign In
+        const result = await signIn('credentials', {
+          redirect: false,
+          email: usernameOrEmail,
+          password: password,
+        });
 
-    // Simulate an API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+        if (result?.error) {
+          setMessage({ type: 'error', text: 'Invalid username/email or password.' });
+        } else {
+          setMessage({ type: 'success', text: 'Login successful! Fetching session...' });
 
+          // 2. Fetch Session Info from API Route
+          try {
+            const sessionResponse = await fetch('/api/getuser', { cache: 'no-store' });
+            
+            // Check HTTP status first
+            if (!sessionResponse.ok) {
+                throw new Error(`Failed to fetch session. HTTP status: ${sessionResponse.status}`);
+            }
+            
+            // CRITICAL FIX: Get the JSON data ONLY ONCE
+            const sessionData = await sessionResponse.json(); 
+            console.log("Fetched session data:", sessionData);
+            
+            // 3. Store data in localStorage (must be stringified)
+            localStorage.setItem('user', JSON.stringify(sessionData));
 
-    if ((usernameOrEmail || usernameOrEmail ) && password.length >= 6) {
-      setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
-      try {
-        const result = await signIn('credentials', {
-          redirect: false, // Prevent automatic redirection
-          email: usernameOrEmail,
-          password: password,
-        });
+            window.location.href = '/mainapp/home'; // Redirect to dashboard/home page
 
-        console.log('SignIn result:', result);
+            
+            setMessage({ type: 'success', text: 'Login successful! Redirecting to dashboard...' });
+            
+          }
+          catch (error) {
+            console.error('Error fetching/storing session after login:', error);
+            setMessage({ type: 'error', text: 'Login succeeded, but failed to load profile data.' });
+          }
+        }
+    }
+    catch (error) {
+        console.error('Overall Login/Auth Error:', error);
+        setMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
+    }
 
-        if (result.error) {
-          setMessage({ type: 'error', text: 'Invalid username/email or password.' });
-        } else {
-          try {
-            const sessionResponse = await fetch('/api/getuser');
-            if (sessionResponse.status !== 200) {
-              throw new Error(`HTTP error! status: ${sessionResponse.status}`);
-            }
-            else {
-              localStorage.setItem('user', await sessionResponse.json());
-            }
-          }
-          catch (error) {
-            console.error('Error fetching session after login:', error);
-          }
-          setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
-          window.location.href = '/mainapp/home';
-          // Optionally redirect or perform other actions on success
-        }
-      }
-      catch (error) {
-        console.error('Login error:', error);
-        setMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
-      }
-    } else {
-      setMessage({
-        type: 'error',
-        text: 'password must be at least 6 characters long.'
-      });
-    }
-
-    setLoading(false);
-  };
+    setLoading(false);
+  };
   
   // Custom component for social login buttons
   const SocialButton: React.FC<{ Icon: React.ElementType, bgColor: string, iconColor: string }> = ({ Icon, bgColor, iconColor }) => (
@@ -159,7 +170,7 @@ const App: React.FC = () => {
                 // Updated: Green link color
                 className="mt-8 text-green-600 hover:text-green-800 font-medium text-sm transition duration-150 border-b border-green-600"
             >
-                Create an accountht 
+                Create an account
             </Link>
             
         </div>

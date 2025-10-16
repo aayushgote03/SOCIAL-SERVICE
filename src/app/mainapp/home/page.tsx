@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Heart, MapPin, Tag, Clock, Users, Zap, CheckCircle, Calendar, Loader2, Leaf, BookOpen, User2, Handshake, CornerDownLeft } from 'lucide-react';
 import { useEffect } from 'react';
+import LogoutButton from '@/app/components/Logoutbutton';
 
 // --- TYPE DEFINITIONS ---
 
@@ -289,6 +290,7 @@ const App: React.FC = () => {
                 <h1 className="text-4xl font-extrabold text-gray-900 flex items-center space-x-3">
                     <Zap className="w-8 h-8 text-green-600" />
                     <span>Hello, {userName}!</span>
+                    <LogoutButton/>
                 </h1>
                 <div className="text-gray-500 font-medium flex items-center space-x-2">
                     {uiLoading ? (
