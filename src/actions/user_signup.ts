@@ -1,5 +1,5 @@
-'use server'; // ESSENTIAL: Marks this file for server-side execution
 
+'use server';
 import { revalidatePath } from 'next/cache';
 import { connectDB } from '@/lib/db'; // Connects to MongoDB
 import { UserModel } from '@/models/User'; // Mongoose User Model

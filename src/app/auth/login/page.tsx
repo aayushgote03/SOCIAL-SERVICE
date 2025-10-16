@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { signIn } from "next-auth/react";
 import { Mail, LockKeyhole, Loader2, LogIn, User, Facebook, Twitter, Chrome, Link } from 'lucide-react';
+import { set } from 'mongoose';
 
 // 1. Define the Message interface for displaying status feedback
 interface Message {
@@ -61,6 +62,14 @@ const App: React.FC = () => {
     setMessage(null);
     setLoading(true);
 
+    if(localStorage.getItem('user')){
+      setMessage({ type: 'error', text: 'Already logged in. Please logout first.' });
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Already logged in. Please logout first.', user);
+      setLoading(false);
+      return;
+    }
+
     // Simulate an API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -69,17 +78,30 @@ const App: React.FC = () => {
       setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
       try {
         const result = await signIn('credentials', {
-          redirect: false,
+          redirect: false, // Prevent automatic redirection
           email: usernameOrEmail,
           password: password,
         });
 
         console.log('SignIn result:', result);
 
-        if (result?.error) {
+        if (result.error) {
           setMessage({ type: 'error', text: 'Invalid username/email or password.' });
         } else {
+          try {
+            const sessionResponse = await fetch('/api/getuser');
+            if (sessionResponse.status !== 200) {
+              throw new Error(`HTTP error! status: ${sessionResponse.status}`);
+            }
+            else {
+              localStorage.setItem('user', await sessionResponse.json());
+            }
+          }
+          catch (error) {
+            console.error('Error fetching session after login:', error);
+          }
           setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
+          window.location.href = '/mainapp/home';
           // Optionally redirect or perform other actions on success
         }
       }
