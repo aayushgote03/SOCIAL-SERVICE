@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, MapPin, Tag, Users, Zap, CheckCircle, Calendar, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 // --- DEFINITIONS ---
 
@@ -35,6 +36,8 @@ const formatDate = (dateString: string): string => {
     }
 };
 
+
+
 // Helper to get priority color styles
 const getPriorityStyles = (priority: string) => {
     switch (priority.toLowerCase()) {
@@ -46,6 +49,8 @@ const getPriorityStyles = (priority: string) => {
             return 'bg-gray-100 text-gray-600';
     }
 };
+
+
 
 const TaskCard: React.FC<Props> = ({ task }) => {
     // Derived values
@@ -122,14 +127,18 @@ const TaskCard: React.FC<Props> = ({ task }) => {
                 </p>
 
                 {/* Commit Button */}
-                <button
-                    
-                    disabled={isFull}
+                <Link
+                    href={{
+                        pathname: '/mainapp/task_details',
+                        query: {
+                            task_id: task.id
+                        }
+                    }}
                     className={`px-4 py-2 rounded-full text-white font-semibold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed
                         ${(isFull ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600')}`}
                 >
                     { (isFull ? "Full" : "Commit Now")}
-                </button>
+                </Link>
             </div>
         </div>
     );

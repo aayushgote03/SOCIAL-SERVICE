@@ -1,17 +1,17 @@
 'use client'
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
-import TaskCard from '@/components/TaskCard'; // Assuming path to TaskCard
-import { Task } from '@/interfaces/taskinterface'; // Importing the Task interface
+import TaskCard from '@/components/TaskCard';
+import { Task } from '@/interfaces/taskinterface'; 
 import { CheckCircle } from 'lucide-react';
-import { fetchActiveTasks } from '@/actions/get_tasks'; // VITAL: Server Action Import
+// 💡 IMPORTANT: The fetchActiveTasks import will now return totalCount
+import { fetchActiveTasks } from '@/actions/get_tasks'; 
 
 // --- PROPS DEFINITIONS ---
-// Now receives only necessary user/filter context, not the actual task list
 interface TaskSectionProps {
     currentFilterLabel: string | undefined;
-    activeFilter: string; // Filter criteria passed from parent
-    searchTerm: string; // Search criteria passed from paren
+    activeFilter: string; // Filter criteria passed from parent (e.g., 'ENVIRONMENT')
+    searchTerm: string; // Search criteria passed from parent
 }
 
 // Simple Skeleton Loader for Tasks (Displayed while data loads)
@@ -35,66 +35,68 @@ const TaskSection: React.FC<TaskSectionProps> = ({
     // 1. Internal State for Data and Loading
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isTasksLoading, setIsTasksLoading] = useState(true);
+    
+    // 💡 NEW PAGINATION STATE
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 4; // Define constant page size
+    
+    const totalPages = Math.ceil(totalCount / pageSize);
 
-    // 2. Fetch Tasks on Mount (Runs only once)
+    // 2. 🔑 CRITICAL: Reset Page when Filter or Search changes
+    useEffect(() => {
+        // This ensures that when the user clicks a new filter or types a new search,
+        // we automatically reset the view back to the first page.
+        setCurrentPage(1);
+    }, [activeFilter, searchTerm]);
+
+    // 3. Fetch Tasks based on ALL criteria (Page, Filter, Search)
     useEffect(() => {
         const loadTasks = async () => {
             setIsTasksLoading(true);
             try {
-                // Call the Server Action to get ALL tasks
-                const result = await fetchActiveTasks(); 
-                console.log(result, "vfdvsv");
+                // 💡 Call the Server Action with all filtering and pagination parameters
+                const result = await fetchActiveTasks({
+                    page: currentPage,
+                    limit: pageSize,
+                    filter: activeFilter,
+                    search: searchTerm,
+                }); 
                 
                 if (result.success && result.tasks) {
-                    setTasks(result.tasks as Task[]); 
-                    console.log("tasks set");
+                    setTasks(result.tasks as Task[]);
+                    // 💡 Set the total count for pagination controls
+                    setTotalCount(result.totalCount || 0);
                 } else {
                     console.error("Failed to fetch tasks:", result.message);
                     setTasks([]); 
+                    setTotalCount(0);
                 }
             } catch (error) {
                 console.error("Network error fetching tasks:", error);
                 setTasks([]);
+                setTotalCount(0);
             } finally {
                 setIsTasksLoading(false);
             }
         };
 
+        // Note: The total number of dependencies now triggers the fetch
         loadTasks();
-    }, []); // Empty dependency array ensures run only on mount
-
-    // 3. Filtering Logic (using useMemo for high performance)
-    const filteredTasks: Task[] = useMemo(() => {
-        let list: Task[] = tasks;
-
-        // Filter by Search Term
-        if (searchTerm) {
-            list = list.filter(task =>
-                task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                task.organizer.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        // Filter by Cause Pill
-        if (activeFilter !== 'all') {
-            list = list.filter(task => task.causeFocus === activeFilter);
-        }
-
-        console.log(list, "Gdbx");
-
-        return list;
-    }, [tasks, searchTerm, activeFilter]); // Re-filters efficiently when filter criteria or base tasks change
+    }, [currentPage, activeFilter, searchTerm]); 
     
-    // 4. Conditional Rendering
+    // 4. Conditional Rendering (The old client-side useMemo filtering is GONE)
     let content;
 
     if (isTasksLoading) {
+        // ... (Skeleton is fine)
         content = (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <TaskSkeleton /><TaskSkeleton /><TaskSkeleton /><TaskSkeleton />
             </div>
         );
-    } else if (filteredTasks.length === 0) {
+    } else if (tasks.length === 0) {
+        // ... (No tasks message)
         content = (
             <div className="p-10 text-center bg-white rounded-xl shadow-md text-gray-500">
                 <h3 className="text-xl font-semibold mb-2">No Tasks Available</h3>
@@ -102,9 +104,10 @@ const TaskSection: React.FC<TaskSectionProps> = ({
             </div>
         );
     } else {
+        // 💡 Render only the tasks for the current page
         content = (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredTasks.map((task: Task) => (
+                {tasks.map((task: Task) => (
                     <TaskCard
                         key={task.id}
                         task={task}
@@ -118,9 +121,35 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         <div className="lg:col-span-3">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 {currentFilterLabel === 'All Causes' ? 'All Available Tasks' : `Tasks for ${currentFilterLabel}`}
-                <span className="ml-2 text-gray-500 font-normal text-lg">({filteredTasks.length} results)</span>
+                {/* 💡 Use totalCount for the overall results */}
+                <span className="ml-2 text-gray-500 font-normal text-lg">({totalCount} total results)</span>
             </h2>
             {content}
+
+            {/* 5. 💡 NEW: Pagination Controls */}
+            {totalCount > pageSize && (
+                <div className="flex justify-center items-center mt-10 space-x-6">
+                    <button 
+                        onClick={() => setCurrentPage(p => p - 1)} 
+                        disabled={currentPage === 1}
+                        className="px-6 py-2 border rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Previous Page
+                    </button>
+                    
+                    <span className="text-sm font-medium text-gray-700">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <button 
+                        onClick={() => setCurrentPage(p => p + 1)}
+                        disabled={currentPage >= totalPages}
+                        className="px-6 py-2 border rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                        Next Page
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,27 +1,27 @@
 'use client';
 import React from 'react';
+import { Zap, Home, ListChecks, Heart, Settings, User, ArrowUpCircle } from 'lucide-react'; // Import ArrowUpCircle
 import Link from 'next/link';
-import { Zap, Home, ListChecks, Heart, Settings, User } from 'lucide-react';
 import LogoutButton from '@/components/Logoutbutton'; // Assuming this path is correct
 
 // Define the navigation links for the dashboard
 const navLinks = [
-    { name: 'Home', href: '/dashboard', Icon: Home },
+    { name: 'Home', href: '/mainapp/home', Icon: Home },
     { name: 'My Tasks', href: '/dashboard/tasks', Icon: ListChecks },
+    { name: 'Create Task', href: '/mainapp/createtask', Icon: ArrowUpCircle }, // <-- ADDED
     { name: 'Saved', href: '/dashboard/saved', Icon: Heart },
     { name: 'Settings', href: '/dashboard/settings', Icon: Settings },
 ];
 
 export default function DashboardNavbar({useremail, username}: {useremail?: string, username?: string}) {
-    // 1. Get the session status and data
-
-    const loading = '';
-    const userName = username || 'User';
+    // NOTE: In a real app, loading, useremail, and username would come from a proper useSession call
+    const loading = false; // Mocking false since props are passed
+    const userName = username || 'Volunteer';
 
     if (loading) {
+        // ... (Loading state JSX remains the same)
         return (
-            // Adjusted for blur effect even in loading state
-            <nav className="top-0 z-10 bg-white/60 backdrop-blur-md backdrop-saturate-150 shadow-md border-b border-gray-200">
+            <nav className="fixed top-0 w-full z-10 bg-white/60 backdrop-blur-md backdrop-saturate-150 shadow-md border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
                     <div className="text-xl font-bold flex items-center text-green-600">
                         <Zap className="w-6 h-6 mr-2" />
@@ -33,12 +33,9 @@ export default function DashboardNavbar({useremail, username}: {useremail?: stri
         );
     }
     
-    
-
     return (
         <nav 
-            // UPDATED: Added semi-transparent background and backdrop-filter classes
-            className="top-0 z-10 bg-white/60 backdrop-blur-md backdrop-saturate-150 shadow-md border-b border-gray-200"
+            className="fixed top-0 w-full z-10 bg-white/60 backdrop-blur-md backdrop-saturate-150 shadow-md border-b border-gray-200"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">

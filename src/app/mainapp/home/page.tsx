@@ -1,10 +1,8 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Search, Heart, Zap, CheckCircle, Loader2, Leaf, BookOpen, User2, Handshake} from 'lucide-react';
 import { useEffect } from 'react';
 import LogoutButton from '@/components/Logoutbutton';
-import TaskCard from '@/components/TaskCard';
-import { Task } from '@/interfaces/taskinterface';
 import TaskSection from '@/components/TaskSection';
 
 
@@ -154,8 +152,6 @@ const App: React.FC = () => {
     // --- Interactive Handlers (Simulated Server Actions) ---
 
     // Handler for Commit Button
-
-    useEffect
     
 
     // Handler for Save/Unsave Button

@@ -4,8 +4,25 @@ import { connectDB } from '@/lib/db';
 import { TaskModel, ITask } from '@/models/Task';
 
 
-// --- UPDATED PUBLIC TASK DEFINITION ---
-// This is the absolute minimal data structure required by the client's TaskCard.
+// --- UPDATED INTERFACES FOR SERVER ACTION ---
+
+// New interface for parameters
+interface FetchParams {
+    page: number;
+    limit: number;
+    filter: string; // activeFilter (e.g., causeFocus)
+    search: string; // searchTerm (e.g., title/organizer)
+}
+
+// Updated result interface to include the total count of filtered items
+interface TaskListResult {
+    success: boolean;
+    message: string;
+    tasks?: PublicTask[];
+    totalCount?: number; // 💡 NEW: Total number of tasks matching the filters
+}
+
+// ... (PublicTask, ITask, and connectDB remain the same) ...
 interface PublicTask {
     id: string;
     title: string;
@@ -16,88 +33,100 @@ interface PublicTask {
     slotsRemaining: number;
     causeFocus: string;
     slots: number;
-    // NOTE: If 'organizer' name is stored on Task model, keep it. 
-    // If not, you must fetch it separately or rely on 'organizerId'.
 }
-// NOTE: We don't need to define the complex Omit/Document logic anymore 
-// because we are explicitly building the exact PublicTask object below.
 
-interface TaskListResult {
-    success: boolean;
-    message: string;
-    tasks?: PublicTask[];
-}
 
 /**
- * Fetches only the required fields for the dashboard's TaskCards.
- * Uses MongoDB projection to limit the data returned from the database.
- * @returns An object containing success status, message, and the array of active tasks.
+ * Fetches required fields with server-side pagination and filtering.
  */
-export async function fetchActiveTasks(): Promise<TaskListResult> {
+export async function fetchActiveTasks({ 
+    page, 
+    limit, 
+    filter, 
+    search 
+}: FetchParams): Promise<TaskListResult> {
+    
     try {
         await connectDB(); 
 
         const activeStatuses: string[] = ['ACTIVE_OPEN', 'ACTIVE_FULL', 'PENDING_REVIEW'];
-        
-        // 1. Query the database using explicit PROJECTION
-        const rawTasks = await TaskModel.find({
+        const offset = (page - 1) * limit;
+
+        // 1. Construct the QUERY OBJECT (The WHERE/MATCH clause)
+        let query: any = {
             status: { $in: activeStatuses },
-            isAcceptingApplications: true, // Only show tasks open for applications
-        }, 
+            isAcceptingApplications: true, 
+        };
+        
+        // Apply Category Filter (activeFilter)
+        if (filter && filter !== 'all') {
+            query.causeFocus = filter; // e.g., { causeFocus: 'ENVIRONMENT' }
+        }
+
+        // Apply Search Term Filter (searchTerm)
+        if (search) {
+            const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+            query.$or = [
+                { title: { $regex: searchRegex } },
+                // NOTE: If organizer name is not directly on the TaskModel, 
+                // you would need a $lookup (aggregation) or to search the Organizer model.
+                // For simplicity, we only search the title here.
+                // { organizer: { $regex: searchRegex } } 
+            ];
+        }
+
+        // 2. Fetch the total count of documents matching the filter (WITHOUT pagination)
+        const totalCount = await TaskModel.countDocuments(query).exec();
+
+
+        // 3. Query the database for the paginated slice
+        const rawTasks = await TaskModel.find(query, 
         { 
             // MongoDB Projection: Select only the fields needed by the client card
             title: 1,
-            organizerId: 1, // Needed to calculate 'organizer' name (simulated)
+            organizerId: 1, 
             location: 1,
             applicationDeadline: 1,
             priorityLevel: 1,
-            maxVolunteers: 1, // Max slots
-            volunteers: 1,    // List of volunteer IDs (to count 'filled')
+            maxVolunteers: 1, 
+            volunteers: 1, 
             causeFocus: 1,
-            _id: 1,           // Always needed for the client 'id'
+            _id: 1, 
         })
         .sort({ priorityLevel: -1, startTime: 1 })
+        .skip(offset) // 💡 PAGINATION OFFSET
+        .limit(limit) // 💡 PAGINATION LIMIT
         .lean() 
         .exec();
 
-        // 2. Transform data for client consumption (ensure all types are primitive)
+        // 4. Transform data for client consumption (unchanged)
         const tasks: PublicTask[] = rawTasks.map(rawTask => {
             const task = rawTask as any; 
-            
-            // Calculate slots remaining (since we fetched maxVolunteers and volunteers array)
             const slotsRemaining = task.maxVolunteers - (task.volunteers?.length || 0);
             
-            // Construct the final minimal PublicTask object
             const transformedTask: PublicTask = {
-                // Primitive ID
                 id: task._id.toString(),
-                
-                // Core Task Fields
                 title: task.title,
                 location: task.location,
                 causeFocus: task.causeFocus,
                 priorityLevel: task.priorityLevel,
-                slots: task.maxVolunteers, // Max slots (using maxVolunteers)
-
-                // Transformed/Calculated Fields
+                slots: task.maxVolunteers,
                 slotsRemaining: slotsRemaining,
-                applicationDeadline: task.applicationDeadline.toISOString(), // Date must be stringified
-
-                // --- SIMULATED FIELD ---
-                // NOTE: The 'organizer' field is usually fetched by looking up organizerId in the UserModel.
-                // For now, we simulate the name using the ID placeholder:
+                applicationDeadline: task.applicationDeadline.toISOString(),
+                // SIMULATED FIELD
                 organizer: `Org ID: ${task.organizerId.toString().substring(18)}`, 
-                // -------------------------
             };
-
             return transformedTask;
         });
+
+        console.log(tasks, "reduced tasks");
 
 
         return { 
             success: true, 
-            message: `Successfully retrieved ${tasks.length} minimalist tasks.`, 
-            tasks: tasks 
+            message: `Successfully retrieved page ${page} of ${totalCount} filtered tasks.`, 
+            tasks: tasks,
+            totalCount: totalCount // 💡 RETURN THE TOTAL COUNT
         };
 
     } catch (error) {
