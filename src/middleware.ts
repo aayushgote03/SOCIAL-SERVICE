@@ -1,7 +1,5 @@
+import { auth } from "./auth";
 import { NextResponse, type NextRequest } from "next/server";
-
-
-
 export async function middleware(req: NextRequest) {
     
     console.log(req.nextUrl);

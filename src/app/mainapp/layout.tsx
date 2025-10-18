@@ -1,6 +1,7 @@
 'use client'
 import { auth } from '@/auth'; // Your NextAuth authentication helper
 import { redirect } from 'next/navigation';
+import DashboardNavbar from '@/components/Navbar';
 // Assume this component uses the session too
 
 export default function DashboardLayout({
@@ -26,6 +27,7 @@ export default function DashboardLayout({
         
         <main className="flex-1 overflow-y-auto p-6">
           {/* Children are the nested pages (e.g., tasks, settings) */}
+          <DashboardNavbar /> 
           {children} 
         </main>
       </div>
