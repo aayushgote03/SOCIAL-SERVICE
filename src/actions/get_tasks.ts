@@ -2,6 +2,7 @@
 
 import { connectDB } from '@/lib/db';
 import { TaskModel, ITask } from '@/models/Task';
+import { UserModel } from '@/models/User';
 
 
 // --- UPDATED INTERFACES FOR SERVER ACTION ---
@@ -35,6 +36,16 @@ interface PublicTask {
     slots: number;
 }
 
+async function getOrganizerName(organizerId: string): Promise<string> {
+    try {
+        // Find user by ID and select only the displayName field
+        const user = await UserModel.findById(organizerId).select('displayName').lean();
+        return user?.displayName || `Unknown Organizer (${organizerId.toString().substring(0, 4)}...)`;
+    } catch (e) {
+        console.warn(`Failed to fetch organizer name for ID: ${organizerId}`, e);
+        return 'Organizer Fetch Failed';
+    }
+}
 
 /**
  * Fetches required fields with server-side pagination and filtering.
@@ -100,26 +111,28 @@ export async function fetchActiveTasks({
         .exec();
 
         // 4. Transform data for client consumption (unchanged)
-        const tasks: PublicTask[] = rawTasks.map(rawTask => {
-            const task = rawTask as any; 
-            const slotsRemaining = task.maxVolunteers - (task.volunteers?.length || 0);
-            
-            const transformedTask: PublicTask = {
-                id: task._id.toString(),
-                title: task.title,
-                location: task.location,
-                causeFocus: task.causeFocus,
-                priorityLevel: task.priorityLevel,
-                slots: task.maxVolunteers,
-                slotsRemaining: slotsRemaining,
-                applicationDeadline: task.applicationDeadline.toISOString(),
-                // SIMULATED FIELD
-                organizer: `Org ID: ${task.organizerId.toString().substring(18)}`, 
-            };
-            return transformedTask;
-        });
-
-        console.log(tasks, "reduced tasks");
+                const tasks: PublicTask[] = await Promise.all(rawTasks.map(async rawTask => {
+                    const task = rawTask as any; 
+                    const slotsRemaining = task.maxVolunteers - (task.volunteers?.length || 0);
+        
+                    const organizername = await getOrganizerName(task.organizerId.toString());
+                    
+                    const transformedTask: PublicTask = {
+                        id: task._id.toString(),
+                        title: task.title,
+                        location: task.location,
+                        causeFocus: task.causeFocus,
+                        priorityLevel: task.priorityLevel,
+                        slots: task.maxVolunteers,
+                        slotsRemaining: slotsRemaining,
+                        applicationDeadline: task.applicationDeadline.toISOString(),
+                        // SIMULATED FIELD
+                        organizer: organizername,
+                    };
+                    return transformedTask;
+                }));
+        
+                console.log(tasks, "reduced tasks");
 
 
         return { 
