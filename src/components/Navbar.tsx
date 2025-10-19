@@ -13,6 +13,7 @@ const organizerTools = [
 ];
 
 const volunteerTools = [
+    { name: 'Edit profile', href: '/mainapp/volunteer/edit_profile', Icon: CheckCircle },
     { name: 'Tasks Committed', href: '/dashboard/volunteer/committed', Icon: CheckCircle },
     { name: 'Application History', href: '/dashboard/volunteer/history', Icon: ListChecks },
 ];

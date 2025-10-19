@@ -3,12 +3,12 @@ import { signUpUser } from '@/actions/user_signup'; // Import your signUpUser Se
 
 // Mock data that mirrors the SignUpData interface
 const mockUserData = {
-    displayName: "CareGiverSue",
-    email: "sue.care@community.com",
-    password: "securepassword123",
-    location: "Dallas, TX",
-    causeFocus: "health",
-    skills: "Home Care Experience, Empathy, Schedule Management",
+    displayName: "PriyaSharma_Eco",
+    email: "priya.sharma.test@email.com",
+    password: "priya@123",
+    location: "Mumbai, India",
+    causeFocus: "environment",
+    skills: "Event Coordination, Social Media",
   };
 
 /**
