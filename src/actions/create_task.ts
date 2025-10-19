@@ -79,7 +79,7 @@ export async function createTask(data: TaskData): Promise<{ success: boolean; me
             priorityLevel: data.priorityLevel,
             applicationDeadline: deadlineDate,
             // Initial Task Life Cycle Status
-            status: data.isAcceptingApplications ? 'PENDING_REVIEW' : 'DRAFT' as TaskStatus,
+            status: data.isAcceptingApplications ? 'ACTIVE_OPEN' : 'DRAFT' as TaskStatus,
             
             // Initial data arrays
             volunteers: [], 

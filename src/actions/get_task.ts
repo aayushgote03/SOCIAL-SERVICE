@@ -25,9 +25,11 @@ type PublicTask = Omit<ITask, 'terminationReason' | 'volunteers' | 'organizerId'
                      location: string;
                      priorityLevel: string;
                      causeFocus: string;
+                     organizer_id: string;
                      maxVolunteers: number;
                      requiredSkills: string[];
                      requirements: string[];
+                    applicationIds: [string] | [];
                  };
 
 interface TaskResult {
@@ -84,7 +86,10 @@ export async function fetchTaskById(id: string): Promise<TaskResult> {
 
         // 3. Transform data for client consumption (ensuring primitive types)
         const task = rawTask as any;
-        const slotsRemaining = task.maxVolunteers - (task.volunteers?.length || 0);
+        console.log(task);
+        console.log(task.applicationIds)
+        
+        const slotsRemaining = task.maxVolunteers - (task.applicationIds?.length || 0);
         
         const publicTask: PublicTask = {
             // Primitive ID and Core Fields
@@ -112,11 +117,13 @@ export async function fetchTaskById(id: string): Promise<TaskResult> {
 
             // Resolved and Calculated Fields
             organizer: organizerName,
+            organizer_id: rawTask.organizerId.toString(),
             slotsRemaining: slotsRemaining,
 
             // Internal Fields (Converted to string)
             volunteers: task.volunteers?.map((vid: Types.ObjectId) => vid.toString()) || [],
-            requirements: []
+            requirements: [],
+            applicationIds: task.application_ids
         };
 
 

@@ -102,6 +102,7 @@ export async function fetchActiveTasks({
             maxVolunteers: 1, 
             volunteers: 1, 
             causeFocus: 1,
+            applicationIds: 1,
             _id: 1, 
         })
         .sort({ priorityLevel: -1, startTime: 1 })
@@ -113,7 +114,9 @@ export async function fetchActiveTasks({
         // 4. Transform data for client consumption (unchanged)
                 const tasks: PublicTask[] = await Promise.all(rawTasks.map(async rawTask => {
                     const task = rawTask as any; 
-                    const slotsRemaining = task.maxVolunteers - (task.volunteers?.length || 0);
+                    console.log(task, "FDSdfsv");
+                    const slotsRemaining = task.maxVolunteers - (task.applicationIds?.length || 0);
+                    console.log(slotsRemaining, "vfs");
         
                     const organizername = await getOrganizerName(task.organizerId.toString());
                     

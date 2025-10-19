@@ -32,6 +32,7 @@ export interface ITask extends Document {
   
   // TERMINATION & COMPLETION
   terminationReason?: string; // Reason must be supplied if status is TERMINATED
+  applicationIds: [string] | [];
   createdAt: Date;
 }
 
@@ -69,6 +70,8 @@ const TaskSchema: Schema = new Schema({
   
   // TERMINATION
   terminationReason: { type: String, required: false },
+
+  applicationIds: { type : [String], default: []},
   
   // TIMESTAMPS
   createdAt: { type: Date, default: Date.now },

@@ -2,10 +2,12 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { 
     Heart, MapPin, Zap, CheckCircle, Calendar, Users, Clock, Tag, 
-    MessageCircle, Clipboard, ArrowLeft, Loader2, CornerDownLeft, MessageSquare, ListChecks
+    MessageCircle, Clipboard, ArrowLeft, Loader2, CornerDownLeft, MessageSquare, ListChecks,
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { fetchTaskById } from '@/actions/get_task'; // VITAL: Server Action Import
+import path from 'path';
+import Link from 'next/link';
 
 // --- PROPS DEFINITION (Matching your Data Model) ---
 // *** FIX APPLIED HERE: applicationDeadline, startTime, and endTime changed from string to Date ***
@@ -20,6 +22,7 @@ interface Task {
     slotsRemaining: number;
     slots: number; // Total capacity
     causeFocus: string;
+    organizer_id: string;
     endTime: Date; // FIX: Changed from string to Date
     startTime: Date; // FIX: Changed from string to Date
     requirements: string[];
@@ -126,6 +129,7 @@ const TaskDetailClientComponent: React.FC = () => {
                         slotsRemaining: typeof raw.slotsRemaining === 'number' ? raw.slotsRemaining : Number(raw.slotsRemaining || 0),
                         slots: typeof raw.slots === 'number' ? raw.slots : Number(raw.slots || 0),
                         causeFocus: String(raw.causeFocus || ''),
+                        organizer_id: String(raw.organizer_id || ''),
                         endTime: raw.endTime ? new Date(raw.endTime) : new Date(),
                         startTime: raw.startTime ? new Date(raw.startTime) : new Date(),
                         requirements: Array.isArray(raw.requirements) ? raw.requirements : (raw.requirements ? String(raw.requirements).split(',').map((s:any)=>s.trim()) : []),
@@ -197,7 +201,7 @@ const TaskDetailClientComponent: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setIsCommitted(true); // Optimistic UI Update
         setIsLoading(false);
-        alert(`Confirmed! Your commitment to ${task.title} is recorded.`);
+        
     };
 
     // Handler for Save/Unsave Button (Calls Server Action in a real app)
@@ -381,16 +385,26 @@ const TaskDetailClientComponent: React.FC = () => {
                             <ProgressBar filled={filledSlots} total={task.slots} />
                             
                             {/* Main Commit Button */}
-                            <button
+                            <Link
                                 onClick={handleCommit}
-                                disabled={mainButtonDisabled}
+                                href={{
+                                    pathname:'/mainapp/apply',
+                                    query: {
+                                        taskid: task.id,
+                                        organizer_id: task.organizer_id,
+                                        tasktitle : task.title,
+                                        taskorganizer : task.organizer,
+                                        taskskills : task.requiredSkills
+                                    }
+                                }}
+                
                                 className={`w-full py-3 rounded-xl text-white font-bold text-lg transition-colors shadow-xl mt-6
                                     ${mainButtonColor} disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2
                                 `}
                             >
                                 {mainButtonDisabled && !isFull ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                                 <span>{mainButtonText}</span>
-                            </button>
+                            </Link>
 
                             {isCommitted && (
                                 <button className="w-full mt-3 py-2 text-red-600 bg-red-50 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition">

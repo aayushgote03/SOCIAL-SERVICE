@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Zap, Home, ListChecks, Heart, Settings, User, ArrowUpCircle, Briefcase, ChevronDown, CheckCircle } from 'lucide-react';
+import { Zap, Home, ListChecks, User, ArrowUpCircle, Briefcase, ChevronDown, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import LogoutButton from '@/components/Logoutbutton'; // Assuming this path is correct
 
@@ -14,8 +14,8 @@ const organizerTools = [
 
 const volunteerTools = [
     { name: 'Edit profile', href: '/mainapp/volunteer/edit_profile', Icon: CheckCircle },
-    { name: 'Tasks Committed', href: '/dashboard/volunteer/committed', Icon: CheckCircle },
-    { name: 'Application History', href: '/dashboard/volunteer/history', Icon: ListChecks },
+    { name: 'Tasks Committed', href: '/mainapp/volunteer/committed', Icon: CheckCircle },
+    { name: 'Application History', href: '/mainapp/volunteer/application_history', Icon: ListChecks },
 ];
 
 // --- SUB COMPONENTS ---

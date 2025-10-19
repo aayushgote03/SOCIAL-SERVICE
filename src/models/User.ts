@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { ApplicationModel } from './Application';
 
 // Define the core interface for a User document (same as before)
 export interface IUser extends Document {
@@ -8,6 +9,8 @@ export interface IUser extends Document {
   location?: string;
   causeFocus: string;
   skills?: string;
+  applicationIds?: string[]
+  applicationHistory?: string[]
   createdAt: Date;
 }
 
@@ -21,6 +24,9 @@ const UserSchema: Schema = new Schema({
   location: { type: String, required: false },
   causeFocus: { type: String, required: true },
   skills: { type: String, required: false },
+  applicationIds: { type : [String], default: []},
+  applicationHistory: { type : [String], default: []},
+
   
   createdAt: { type: Date, default: Date.now },
 });
