@@ -66,20 +66,25 @@ const EditTask: React.FC<EditTaskProps> = ({ task, onClose, onUpdate, onSuccess 
         title: task.title,
         description: task.description,
         startTime: toFormDateTime(task.startTime),
-        endTime: toFormDateTime(task.endTime), // VITAL: Initialize EndTime from task data
+        endTime: toFormDateTime(task.endTime),
         location: task.location,
         maxVolunteers: task.maxVolunteers,
         causeFocus: task.causeFocus,
-        requiredSkills: task.requiredSkills.join(', '), // Convert array to string
+        requiredSkills: task.requiredSkills.join(', '),
         priorityLevel: task.priorityLevel,
         applicationDeadline: toFormDateTime(task.applicationDeadline),
         isAcceptingApplications: task.isAcceptingApplications,
-        useremail: 'aayushgote03@gmail.com', // Placeholder email
+        useremail: 'aayushgote03@gmail.com',
     };
 
     const [formData, setFormData] = useState<EditableTaskData>(initialFormData);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<Message | null>(null);
+
+    // Update formData whenever the task prop changes
+    useEffect(() => {
+        setFormData(initialFormData);
+    }, [task]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
