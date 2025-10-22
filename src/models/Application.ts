@@ -19,7 +19,7 @@ export interface IApplication extends Document {
     
     // Organizer Verdict Details
     verdictReason: string | null;
-    verdictBy: Types.ObjectId | null; // ID of the Organizer/Admin who reviewed it
+    verdictBy: string | null; // ID of the Organizer/Admin who reviewed it
     
     // Timestamps
     appliedAt: Date;
@@ -44,7 +44,8 @@ const ApplicationSchema: Schema = new Schema({
     },
     
     verdictReason: { type: String, default: null },
-    verdictBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    verdictBy: { type: String, ref: 'User', default: null },
+    appliedAt : { type: Date, default: Date.now },
     reviewedAt: { type: Date, default: null },
 
 }, {

@@ -8,7 +8,7 @@ import LogoutButton from '@/components/Logoutbutton'; // Assuming this path is c
 
 const organizerTools = [
     { name: 'Tasks Created', href: '/mainapp/organizer/created_tasks', Icon: Briefcase },
-    { name: 'Applications Received', href: '/dashboard/organizer/applicants', Icon: ListChecks },
+    { name: 'Applications Received', href: '/mainapp/organizer/applicants', Icon: ListChecks },
     { name: 'Create New Task', href: '/mainapp/createtask', Icon: ArrowUpCircle },
 ];
 

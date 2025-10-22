@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials" // Import the NextAuthConfig type
 import bcrypt from 'bcryptjs'
 
+
 // --- IMPORTANT: Ensure these imports point to your actual files ---
 // Assuming these are located at the root or correctly aliased:
 import { connectDB } from "./lib/db" 
@@ -44,6 +45,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
           if (isMatch) {
               console.log('Authorization Success');
+           
+ 
               
               // 3. Return a minimal user object required by NextAuth
               return {
